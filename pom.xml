@@ -6,7 +6,7 @@
 
     <groupId>com.github.jbharter</groupId>
     <artifactId>FlashCache</artifactId>
-    <version>RELEASE-1.0.0</version>
+    <version>RELEASE-1.0.1</version>
 
     <build>
         <plugins>
