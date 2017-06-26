@@ -11,28 +11,6 @@ public abstract class FlashCache<K,V> implements Map<K,V> {
 
     private ConcurrentHashMap<K,V> internalCache;
 
-    public class FlashCacheBuilder {
-        private int maxEntries = 1000000;
-        private ConcurrentHashMap<K,V> map = new ConcurrentHashMap<>();
-        private int optBuffSize = 20;
-
-        public FlashCacheBuilder setMaxEntries(int maxEntries) {
-            this.maxEntries = maxEntries;
-            return this;
-        }
-        public FlashCacheBuilder setOptBufferSize(int numEntries) {
-            this.optBuffSize = numEntries;
-            return this;
-        }
-        ConcurrentHashMap<K,V> getMap() { return this.map; }
-        int getMaxEntries() { return this.maxEntries; }
-        int getOptBufferSize() { return optBuffSize; }
-
-        public FlashCache build() {
-            return new FlashCacheByElements(this);
-        }
-    }
-
     public class FlashCacheByElements extends FlashCache<K,V> implements Map<K,V> {
         private AtomicLong maxNumElements;
         private AtomicLong numElements;
@@ -41,18 +19,22 @@ public abstract class FlashCache<K,V> implements Map<K,V> {
         private int optBufferSize;
 
         public FlashCacheByElements() {
-            FlashCacheBuilder b = new FlashCacheBuilder();
-            internalCache   = b.getMap();
-            maxNumElements  = new AtomicLong(b.getMaxEntries());
+            internalCache   = new ConcurrentHashMap<>();
+            maxNumElements  = new AtomicLong(1000000);
             numElements     = new AtomicLong(0);
-            optBufferSize   = b.getOptBufferSize();
+            optBufferSize   = 20;
         }
-
-        public FlashCacheByElements(FlashCacheBuilder builder) {
-            internalCache   = builder.getMap();
-            maxNumElements  = new AtomicLong(builder.getMaxEntries());
+        public FlashCacheByElements(Long maxElements) {
+            internalCache   = new ConcurrentHashMap<>();
+            maxNumElements  = new AtomicLong(maxElements);
             numElements     = new AtomicLong(0);
-            optBufferSize   = builder.getOptBufferSize();
+            optBufferSize   = 20;
+        }
+        public FlashCacheByElements(Long maxElements, int buffSize) {
+            internalCache   = new ConcurrentHashMap<>();
+            maxNumElements  = new AtomicLong(maxElements);
+            numElements     = new AtomicLong(0);
+            optBufferSize   = buffSize;
         }
 
         public int size() {
