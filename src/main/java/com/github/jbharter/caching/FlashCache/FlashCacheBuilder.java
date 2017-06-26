@@ -28,7 +28,7 @@ public class FlashCacheBuilder<K,V> {
     int getOptBufferSize() {
         return optBuffSize;
     }
-    FlashCache build() {
+    public FlashCache<K,V> build() {
         return FlashCache.build(this);
     }
 }
