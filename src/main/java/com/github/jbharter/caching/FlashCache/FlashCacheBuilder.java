@@ -29,6 +29,6 @@ public class FlashCacheBuilder<K,V> {
         return optBuffSize;
     }
     public FlashCache<K,V> build() {
-        return FlashCache.build(this);
+        return new FlashCacheByElements<>(this);
     }
 }
