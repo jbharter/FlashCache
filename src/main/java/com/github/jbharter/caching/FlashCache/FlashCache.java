@@ -40,6 +40,14 @@ public abstract class FlashCache<K,V> implements Map<K,V> {
         private AtomicBoolean near = new AtomicBoolean(false);
         private int optBufferSize;
 
+        public FlashCacheByElements() {
+            FlashCacheBuilder b = new FlashCacheBuilder();
+            internalCache   = b.getMap();
+            maxNumElements  = new AtomicLong(b.getMaxEntries());
+            numElements     = new AtomicLong(0);
+            optBufferSize   = b.getOptBufferSize();
+        }
+
         public FlashCacheByElements(FlashCacheBuilder builder) {
             internalCache   = builder.getMap();
             maxNumElements  = new AtomicLong(builder.getMaxEntries());
