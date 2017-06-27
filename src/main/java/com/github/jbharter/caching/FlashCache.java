@@ -1,4 +1,4 @@
-package com.github.jbharter.caching.FlashCache;
+package com.github.jbharter.caching;
 
 
 import java.util.*;
