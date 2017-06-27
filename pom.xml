@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.jbharter</groupId>
-    <artifactId>FlashCache</artifactId>
+    <artifactId>caching</artifactId>
     <version>1.0.2-SNAPSHOT</version>
 
     <build>
