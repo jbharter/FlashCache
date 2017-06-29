@@ -5,21 +5,21 @@ This is my attempt at a lightweight caching type. There is probably a better bui
 
 Use this in maven projects by adding this to your repositories,
 
-`
+```xml
 <repositories>
 		<repository>
 		    <id>jitpack.io</id>
 		    <url>https://jitpack.io</url>
 		</repository>
 </repositories>
-`
+```
 
 and this to your dependencies
 
-`
+```xml
 <dependency>
 	  <groupId>com.github.jbharter</groupId>
 	  <artifactId>FlashCache</artifactId>
 	  <version>RELEASE-1.0.2</version>
 </dependency>
-`
+```
