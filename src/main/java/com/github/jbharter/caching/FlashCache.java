@@ -1,6 +1,5 @@
 package com.github.jbharter.caching;
 
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -14,31 +13,26 @@ public class FlashCache<K,V> implements Map<K,V> {
     private ConcurrentHashMap<K,V> internalCache;
 
     private AtomicLong maxNumElements;
-    private AtomicLong numElements;
     private ConcurrentLinkedQueue<K> keyQueue = new ConcurrentLinkedQueue<>();
-    private AtomicBoolean near = new AtomicBoolean(false);
-    private int optBufferSize;
+    private AtomicBoolean full = new AtomicBoolean(false);
+    private int purgeStep;
 
     public FlashCache() {
         internalCache   = new ConcurrentHashMap<>();
         maxNumElements  = new AtomicLong(1000000);
-        numElements     = new AtomicLong(0);
-        optBufferSize   = 20;
+        purgeStep = 20;
     }
     public FlashCache(Long maxElements) {
         internalCache   = new ConcurrentHashMap<>();
         maxNumElements  = new AtomicLong(maxElements);
-        numElements     = new AtomicLong(0);
-        optBufferSize   = 20;
+        purgeStep = 20;
     }
-    public FlashCache(Long maxElements, int buffSize) {
+    public FlashCache(Long maxElements, int step) {
         internalCache   = new ConcurrentHashMap<>();
         maxNumElements  = new AtomicLong(maxElements);
-        numElements     = new AtomicLong(0);
-        optBufferSize   = buffSize;
+        purgeStep = step;
     }
 
-    private void usize() { numElements.getAndSet(keyQueue.size()); }
     private void purge(int num){
         if (keyQueue.size() > num)
             for (int i = 0; i < num; ++i) internalCache.remove(keyQueue.poll());
@@ -49,15 +43,15 @@ public class FlashCache<K,V> implements Map<K,V> {
     }
     private V internalRemove(K key) {
         keyQueue.remove(key);
-        usize();
         return internalCache.remove(key);
+    }
+    private V internalPut(K key, V value) {
+        keyQueue.add(key);
+        return internalCache.put(key,value);
     }
 
     // Map interface
-    public int size() {
-        numElements.getAndSet(internalCache.size());
-        return numElements.intValue();
-    }
+    public int size() { return internalCache.size(); }
     public boolean isEmpty() { return internalCache.isEmpty(); }
     public boolean containsKey(Object key) { return internalCache.containsKey(key); }
     public boolean containsValue(Object value) { return internalCache.containsValue(value); }
@@ -68,19 +62,14 @@ public class FlashCache<K,V> implements Map<K,V> {
     public void clear() {
         internalCache.clear();
         keyQueue.clear();
-        usize();
     }
     public V remove(Object key) { return (key != null) ? internalRemove((K)key) : null; }
     public V put(K key, V value) {
-        if (!near.get()) {
-            near.getAndSet(maxNumElements.get() - optBufferSize > numElements.incrementAndGet());
-            return internalCache.put(key,value);
-        } else if (maxNumElements.get() > numElements.get()) {
-            numElements.incrementAndGet();
-            return internalCache.put(key,value);
+        if (!full.getAndSet(maxNumElements.get() < size() + purgeStep)) {
+            return internalPut(key,value);
         } else {
-            purge(optBufferSize);
-            return put(key,value);
+            purge(purgeStep);
+            return internalPut(key,value);
         }
     }
     public V put(K key, Function<K,V> mapper) { return put(key,mapper.apply(key)); }
@@ -89,7 +78,7 @@ public class FlashCache<K,V> implements Map<K,V> {
             internalCache.putAll(m);
         } else {
             Long added = m.entrySet().parallelStream().map(entry -> put(entry.getKey(),entry.getValue())).count();
-            if (added == m.size()) near.getAndSet(m.size() - optBufferSize > numElements.get());
+            if (added == m.size()) full.getAndSet(m.size() - purgeStep > size());
         }
     }
 
