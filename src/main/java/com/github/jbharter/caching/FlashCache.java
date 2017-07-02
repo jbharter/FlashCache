@@ -16,6 +16,7 @@ public class FlashCache<K,V> implements Map<K,V> {
     private ConcurrentLinkedQueue<K> keyQueue = new ConcurrentLinkedQueue<>();
     private AtomicBoolean full = new AtomicBoolean(false);
     private int purgeStep;
+    // TODO --> manage size based on how much free memory we have
 
     public FlashCache() {
         internalCache   = new ConcurrentHashMap<>();
