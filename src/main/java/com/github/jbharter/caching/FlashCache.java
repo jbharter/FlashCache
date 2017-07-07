@@ -54,6 +54,11 @@ public class FlashCache<K,V> extends BaseCache<K,V> {
         keyQueue.add(key);
         return internalCache.put(key,value);
     }
+
+//    V internalPut(K key, Function<? super K, ? extends V> mapper) {
+//        return null;
+//    }
+
     void internalPutAll(Map<? extends K, ? extends V> m) {
 
     }
@@ -67,11 +72,36 @@ public class FlashCache<K,V> extends BaseCache<K,V> {
     void purge(int num){
         for (int i = 0; i < num; ++i) purge();
     }
+
+
+    private AtomicLong getMaxNumElements() { return maxNumElements; }
+    private ConcurrentLinkedQueue<K> getKeyQueue() { return keyQueue; }
+    private AtomicBoolean getFull() { return full; }
+    private int getPurgeStep() { return purgeStep; }
+    private Function<K,V> getFunc() { return func; }
+
+    void purgeHard(int num) {
+        purge(num);
+        FlashCache<K,V> t = this;
+        this.internalCache = new ConcurrentHashMap<>(t.size());
+        this.internalCache.putAll(t.getInternalCache());
+        this.maxNumElements = t.getMaxNumElements();
+        this.keyQueue = t.getKeyQueue();
+        this.full = t.getFull();
+        this.purgeStep = t.getPurgeStep();
+        this.func = t.getFunc();
+    }
+
+    @Override
+    Long getMeanMemberSize() {
+        return null;
+    }
+
     public void finalize() {
         instanceSet.remove(this);
     }
 
-    private V internalPut(K key, Function<K,V> function) {
+    V internalPut(K key, Function<? super K,? extends V> function) {
         Long t = System.nanoTime();
         V t2 = function.apply(key);
         computationOptimization.put(key, ((double) System.currentTimeMillis()) - t);

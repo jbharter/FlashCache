@@ -7,20 +7,59 @@ import java.util.function.*;
 import java.util.stream.*;
 
 public abstract class BaseCache<K,V> implements Map<K,V> {
-    static ConcurrentHashMap<FlashCache,Function> instanceSet = new ConcurrentHashMap<>();
+    // Parent Class members
+    private static double doubleMemPressureMax = 0.7;
+    // Store instances and management functions
+    static ConcurrentHashMap<BaseCache,Function> instanceSet = new ConcurrentHashMap<>();
+    static int numInstances() { return instanceSet.size(); }
+    static Long numEntries() { return instanceSet.keySet().parallelStream().mapToLong(BaseCache::size).sum(); }
+    static Long usedMem () {
+        return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+    }
+    static double memPressure () {
+        return 1.0 - (Runtime.getRuntime().freeMemory()/(double)Runtime.getRuntime().totalMemory());
+    }
+    public static void setMemPressureMax(double max) {
+        if (max > 0 && max < 1) {
+            doubleMemPressureMax = max;
+        }
+    }
 
     // Instance Members
     ConcurrentHashMap<K,V> internalCache;
+    Long meanMemberSize = 0L;
+
 
     // Instance methods
     abstract V internalRemove(K key);
     abstract V internalPut(K key, V val);
-    abstract V internalPut(K key, Function<K,V> mapper);
+    abstract V internalPut(K key, Function<? super K,? extends V> mapper);
     abstract void internalPutAll(Map<? extends K, ? extends V> m);
     abstract void purge();
     abstract void purge(int num);
+    abstract void purgeHard(int num);
+    abstract Long getMeanMemberSize();
     public abstract void finalize();
 
+    protected ConcurrentHashMap<K,V> getInternalCache() { return internalCache; }
+
+    protected void makeWay() {
+        if(memPressure() > doubleMemPressureMax) {
+            instanceSet.entrySet().stream().filter(each -> each.getKey().getMeanMemberSize() != null).sorted((left,right) -> (left.getKey().getMeanMemberSize() > right.getKey().getMeanMemberSize()) ? 1 : -1).forEach(sortedOnSize -> {
+                if (memPressure() > doubleMemPressureMax) sortedOnSize.getValue().apply(20);
+            });
+            makeWay(0);
+        }
+    }
+    private void makeWay(int numIter) {
+        if(memPressure() > doubleMemPressureMax && numIter < 20) {
+            instanceSet.entrySet().stream().sorted((left,right) -> (left.getKey().getMeanMemberSize() > right.getKey().getMeanMemberSize()) ? 1 : -1).forEach(sortedOnSize -> {
+                if (memPressure() > doubleMemPressureMax) sortedOnSize.getValue().apply(20);
+            });
+            makeWay(++numIter);
+        }
+        if (numIter == 20) { instanceSet.keySet().forEach(BaseCache::clear); } // The nuclear option
+    }
 
     // Streams && Helpers
     public Stream<Map.Entry<K,V>> stream()                                                                   { return internalCache.entrySet().stream(); }
