@@ -1,4 +1,4 @@
-# FlashCache
+# JCache
 A quick class to provide a lightweight cache wrapper on top of the ConcurrentHashMap class
 
 [![](https://jitpack.io/v/jbharter/JCache.svg)](https://jitpack.io/#jbharter/JCache)
