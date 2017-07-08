@@ -65,6 +65,12 @@ public class SortedCache<K,V> extends BaseCache<K,V> {
     public V put(K key, Function<K,V> map)                              { return internalPut(key,map); }
     public void put(Collection<? extends K> c, Function<K,V> mapper)    { c.parallelStream().forEach(thing -> put(thing,mapper));}
 
+    public V fget(K key) {
+        if (!internalCache.containsKey(key) && this.mapper != null) {
+            return put(key);
+        } else return internalCache.getOrDefault(key, null);
+    }
+
     V internalRemove(Object key) {
         Set<Double> rset = internalComputeTimeMap.entrySet().parallelStream().filter(any -> any.getValue().equals(key)).map(Map.Entry::getKey).collect(Collectors.toSet());
         rset.forEach(inSet -> {
