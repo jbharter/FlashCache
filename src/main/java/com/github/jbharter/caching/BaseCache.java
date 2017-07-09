@@ -48,17 +48,7 @@ public abstract class BaseCache<K,V> implements Map<K,V> {
             instanceSet.entrySet().stream().filter(each -> each.getKey().getMeanMemberSize() != null).sorted((left,right) -> (left.getKey().getMeanMemberSize() > right.getKey().getMeanMemberSize()) ? 1 : -1).forEach(sortedOnSize -> {
                 if (memPressure() > doubleMemPressureMax) sortedOnSize.getValue().apply(20);
             });
-            makeWay(0);
         }
-    }
-    private void makeWay(int numIter) {
-        if(memPressure() > doubleMemPressureMax && numIter < 20) {
-            instanceSet.entrySet().stream().sorted((left,right) -> (left.getKey().getMeanMemberSize() > right.getKey().getMeanMemberSize()) ? 1 : -1).forEach(sortedOnSize -> {
-                if (memPressure() > doubleMemPressureMax) sortedOnSize.getValue().apply(20);
-            });
-            makeWay(++numIter);
-        }
-        if (numIter == 20) { instanceSet.keySet().forEach(BaseCache::clear); } // The nuclear option
     }
 
     // Streams && Helpers

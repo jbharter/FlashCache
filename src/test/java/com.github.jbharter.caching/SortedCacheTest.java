@@ -12,9 +12,13 @@ public class SortedCacheTest {
         cache.put("another key");
         AtomicLong increment = new AtomicLong(0);
 
-        while (BaseCache.memPressure() < 0.9) {
-            cache.put("Key " + Long.toString(increment.incrementAndGet()));
-        }
+//        while (BaseCache.memPressure() < 0.9) {
+//            System.out.println(increment.get());
+//            if(increment.get() == 653666) {
+//                System.out.print("H");
+//            }
+//            cache.put("Key " + Long.toString(increment.incrementAndGet()));
+//        }
 
         cache.forEach((key, value) -> System.out.println(key + " => " + value));
 

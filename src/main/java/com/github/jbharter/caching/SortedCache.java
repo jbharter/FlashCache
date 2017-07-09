@@ -81,7 +81,7 @@ public class SortedCache<K,V> extends BaseCache<K,V> {
     }
 
     void purge()                { internalPoll(); }
-    void purge(int num)         { for (int i = 0; i < num && size() > 0; ++i) purge(); }
+    void purge(int num)         { for (int i = 0; i < num && size() > 0; ++i) internalPoll(); }
     void purgeHard(int num) {
         purge(num);
         SortedCache<K,V> t = this;
