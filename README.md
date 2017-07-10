@@ -23,6 +23,6 @@ and this to your dependencies
 <dependency>
     <groupId>com.github.jbharter</groupId>
     <artifactId>JCache</artifactId>
-    <version>RELEASE-1.0.2</version>
+    <version>1.0.0-STABLE</version>
 </dependency>
 ```
