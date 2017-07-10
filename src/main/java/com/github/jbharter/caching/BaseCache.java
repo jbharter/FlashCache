@@ -6,49 +6,53 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
 import java.util.stream.*;
 
-public abstract class BaseCache<K,V> implements Map<K,V> {
+public abstract class BaseCache<K,V> {
     // Parent Class members
-    private static double doubleMemPressureMax = 0.7;
-    // Store instances and management functions
-    static ConcurrentHashMap<BaseCache,Function> instanceSet = new ConcurrentHashMap<>();
-    static int numInstances() { return instanceSet.size(); }
-    static Long numEntries() { return instanceSet.keySet().parallelStream().mapToLong(BaseCache::size).sum(); }
-    static Long usedMem () {
-        return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-    }
-    static double memPressure () {
-        return 1.0 - (Runtime.getRuntime().freeMemory()/(double)Runtime.getRuntime().totalMemory());
-    }
-    public static void setMemPressureMax(double max) {
-        if (max > 0 && max < 1) {
-            doubleMemPressureMax = max;
-        }
-    }
+    static final Long DEFAULT_PURGE_STEP = 50L;
+    static final Long DEFAULT_UPPER_BOUND = 1000000L;
+    static double doubleMemPressureMax = 0.7;
+    static ConcurrentHashMap<BaseCache,CacheManagement> instanceSet = new ConcurrentHashMap<>();
 
-    // Instance Members
+    // Class instances and management functions
+    protected static int getNumInstances()              { return instanceSet.size(); }
+    protected static Long getNumEntries()               { return instanceSet.keySet().parallelStream().mapToLong(BaseCache::size).sum(); }
+    protected static Long getUsedMem()                  { return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(); }
+    protected static double getMemPressure()            { return 1.0 - (Runtime.getRuntime().freeMemory()/(double)Runtime.getRuntime().totalMemory()); }
+    protected static void setMaxMemPressure(double max) { if (max > 0 && max < 1) { doubleMemPressureMax = max; } }
+
+    // Instance Specific
     ConcurrentHashMap<K,V> internalCache;
     Long meanMemberSize = 0L;
+    Function<? super K,? extends V> mapper;
 
+    BaseCache() {
+        instanceSet.put(this,new CacheManagement(DEFAULT_PURGE_STEP,DEFAULT_UPPER_BOUND));
+    }
+    BaseCache(CacheManagement mgmt) {
+        instanceSet.put(this, mgmt);
+    }
 
     // Instance methods
-    abstract V internalRemove(K key);
-    abstract V internalPut(K key, V val);
-    abstract V internalPut(K key, Function<? super K,? extends V> mapper);
-    abstract void internalPutAll(Map<? extends K, ? extends V> m);
     abstract void purge();
-    abstract void purge(int num);
-    abstract void purgeHard(int num);
-    abstract Long getMeanMemberSize();
-    public abstract void finalize();
+    abstract void purge(Long num);
+    public abstract V remove(K key);
+    public abstract V get(K key);
+    public abstract void clear();
 
+    boolean notfull() { return getUpperBound() > internalCache.size(); }
+    public void finalize() {
+        clear();
+        getInternalCache().remove(this);
+    }
     protected ConcurrentHashMap<K,V> getInternalCache() { return internalCache; }
-
-    protected void makeWay() {
-        if(memPressure() > doubleMemPressureMax) {
-            instanceSet.entrySet().stream().filter(each -> each.getKey().getMeanMemberSize() != null).sorted((left,right) -> (left.getKey().getMeanMemberSize() > right.getKey().getMeanMemberSize()) ? 1 : -1).forEach(sortedOnSize -> {
-                if (memPressure() > doubleMemPressureMax) sortedOnSize.getValue().apply(20);
-            });
-        }
+    protected CacheManagement getCacheManagement(BaseCache b) {
+        return instanceSet.get(b);
+    }
+    public Long getUpperBound(){
+        return instanceSet.get(this).getUpperBound();
+    }
+    public Long getPurgeStep() {
+        return instanceSet.get(this).getPurgeStep();
     }
 
     // Streams && Helpers
@@ -67,19 +71,15 @@ public abstract class BaseCache<K,V> implements Map<K,V> {
     public Consumer<Consumer<? super Map.Entry<K,V>>>            forEach        = action    -> internalCache.entrySet().forEach(action);
     public Consumer<Consumer <? super Map.Entry<K,V>>>           forEachOrdered = action    -> internalCache.entrySet().forEach(action);
 
-    // Map Interface
-    public V put(K key, V value)                        { return internalPut(key,value); }
-    public void putAll(Map<? extends K, ? extends V> m) { internalPutAll(m); }
-    public int size()                                   { return internalCache.size(); }
+    // Map Interface (Generics that concretes shouldn't have to worry about.
+    public Long size()                                  { return (long) internalCache.size(); }
     public boolean isEmpty()                            { return internalCache.isEmpty(); }
-    public boolean containsKey(Object key)              { return internalCache.containsKey(key); }
-    public boolean containsValue(Object value)          { return internalCache.containsValue(value); }
-    public V get(Object key)                            { return internalCache.get(key); }
+    public boolean containsKey(K key)                   { return internalCache.containsKey(key); }
+    public boolean containsValue(V value)               { return internalCache.containsValue(value); }
+
     public Set<K> keySet()                              { return internalCache.keySet(); }
     public Collection<V> values()                       { return internalCache.values(); }
-    public Set<Entry<K, V>> entrySet()                  { return internalCache.entrySet(); }
-    public V remove(Object key)                         { return (key != null) ? internalRemove((K)key) : null; }
-    public abstract void clear();
+    public Set<AbstractMap.Entry<K, V>> entrySet()      { return internalCache.entrySet(); }
 
     // Stream Interface
     public <R> Stream<R>                map(Function<? super Map.Entry<K, V>, ? extends R> mapper)                                                      { return internalCache.entrySet().parallelStream().map(mapper); }
