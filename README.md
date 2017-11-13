@@ -3,6 +3,7 @@ A quick class to provide a lightweight cache wrapper on top of the ConcurrentHas
 
 [![](https://jitpack.io/v/jbharter/JCache.svg)](https://jitpack.io/#jbharter/JCache)
 [![](https://travis-ci.org/jbharter/JCache.svg?branch=master)](https://travis-ci.org/jbharter/JCache#)
+[![License: BSD-III](https://img.shields.io/badge/license-BSD--III-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 This is my attempt at a lightweight caching type. There is probably a better built in implementation, but since I like 
 to make things more difficult for myself, I created one on my own! This was created as an extension on the 
