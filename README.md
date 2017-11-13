@@ -81,6 +81,6 @@ cache will create space by purging the least computationally expensive elements.
             }
         });
         
-        test.poll() // != "fancy func" --> poll pops the lest computationally expensive element in the cache
+        test.poll() // != "fancy func" --> poll pops the least computationally expensive element in the cache
 
 ```
