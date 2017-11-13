@@ -11,7 +11,7 @@ caches can reference transform functions that allow transparent data manipulatio
 purges based on least computationally expensive elements, in the case that a transform is defined.
 
 
-##Installing
+## Installing
 Use this in maven projects by adding this to your repositories,
 
 ```xml
@@ -33,7 +33,7 @@ and this to your dependencies
 </dependency>
 ```
 
-##Examples
+## Examples
 ```java
     // Simple K -> K Cache 
     FlashCache<String,String> test = new FlashCache<>(/* Step Size */1L,/* max number of elements*/10L);
