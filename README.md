@@ -33,6 +33,12 @@ and this to your dependencies
     <version>1.0.0-STABLE</version>
 </dependency>
 ```
+Alternately, you can build it yourself with Apache Maven. 
+```shell
+    git clone git@github.com:jbharter/JCache.git
+    cd JCache
+    mvn -U clean package
+```
 
 ## Examples
 ```java
