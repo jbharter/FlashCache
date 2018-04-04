@@ -12,11 +12,11 @@ public class SortedCacheTest extends TestCase {
         test.setMapper(String::trim);
 
         test.put(" a string to be trimmed ");
-        assertTrue("Basic Call", test.get(" a string to be trimmed ").equals("a string to be trimmed"));
+        assertEquals("Basic Call", "a string to be trimmed", test.get(" a string to be trimmed "));
 
         test.setMapper(each -> each.trim().toUpperCase());
         test.put(" another ");
-        assertTrue("Basic Call", test.get(" another ").equals("ANOTHER"));
+        assertEquals("Basic Call", "ANOTHER", test.get(" another "));
     }
 
     public void testComputeQueue() {
@@ -51,8 +51,8 @@ public class SortedCacheTest extends TestCase {
         test.setMapper(String::trim);
         test.put(Arrays.asList("0","1","2","3","4","5","6","7","8","9","10","11","12"));
 
-        assertTrue("Test Clear", test.size() == 13);
+        assertEquals("Test Clear", 13, (long) test.size());
         test.clear();
-        assertTrue("Test Clear", test.size() == 0);
+        assertEquals("Test Clear", 0, (long) test.size());
     }
 }

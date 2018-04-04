@@ -1,8 +1,6 @@
 package com.github.jbharter.caching;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,19 +19,19 @@ public class FlashCache<K,V> extends BaseCache<K,V> {
         mapper = function;
     }
     public FlashCache(Long maxElements) {
-        super(new CacheManagement(DEFAULT_PURGE_STEP,maxElements));
+        super(maxElements);
         internalCache   = new ConcurrentHashMap<>();
     }
     public FlashCache(Long step, Long maxElements) {
-        super(new CacheManagement(step,maxElements));
+        super(step,maxElements);
         internalCache   = new ConcurrentHashMap<>();
     }
 
-    void purge() {
+    public void purge() {
         if (keyQueue.size() > 0) internalCache.remove(keyQueue.poll());
         else { clear(); }
     }
-    void purge(Long num) { for (int i = 0; i < num; ++i) purge(); }
+    public void purge(Long num) { for (int i = 0; i < num; ++i) purge(); }
 
     public FlashCache<K,V> setMapper(Function<? super K, ? extends V> map)   { this.mapper = map; return this; }
     private ConcurrentLinkedQueue<K> getKeyQueue()                      { return keyQueue; }
@@ -63,19 +61,19 @@ public class FlashCache<K,V> extends BaseCache<K,V> {
         }
     }
     public V put(K key, Function<? super K,? extends V> mapper) { return put(key,mapper.apply(key)); }
-    public void putAll(Map<? extends K, ? extends V> m) {
-        if (m.size() + internalCache.size() <= getUpperBound()) {
-            keyQueue.addAll(m.keySet());
-            internalCache.putAll(m);
-        } else if (m.size() + internalCache.size() > getUpperBound()) {
-            Queue<K> keyset = new ConcurrentLinkedQueue<>(m.keySet());
-            Queue<V> valset = new ConcurrentLinkedQueue<>(m.values());
-            while (m.size() + internalCache.size() <= getUpperBound()) {
-                put(keyset.poll(),valset.poll());
-            }
-        }
-    }
-    public void putAll(BaseCache<? extends K, ? extends V> bc) { putAll(bc.getInternalCache()); }
+//    public void putAll(Map<? extends K, ? extends V> m) {
+//        if (m.size() + internalCache.size() <= getUpperBound()) {
+//            keyQueue.addAll(m.keySet());
+//            internalCache.putAll(m);
+//        } else if (m.size() + internalCache.size() > getUpperBound()) {
+//            Queue<K> keyset = new ConcurrentLinkedQueue<>(m.keySet());
+//            Queue<V> valset = new ConcurrentLinkedQueue<>(m.values());
+//            while (m.size() + internalCache.size() <= getUpperBound()) {
+//                put(keyset.poll(),valset.poll());
+//            }
+//        }
+//    }
+//    public void putAll(BaseCache<? extends K, ? extends V> bc) { putAll(bc.getInternalCache()); }
 
     public V remove(K key) {
         keyQueue.remove(key);
@@ -86,8 +84,23 @@ public class FlashCache<K,V> extends BaseCache<K,V> {
         return (internalCache.containsKey(key)) ? internalCache.get(key) : put(key);
     }
 
+    @Override
+    public V getOrDefault(K key, V defaultValue) {
+        return null;
+    }
+
     public void clear() {
         keyQueue.clear();
         internalCache.clear();
+    }
+
+    @Override
+    public void basicPurgeEvent() {
+        System.out.println("FlashCache purge event");
+    }
+
+    @Override
+    public void criticalPurgeEvent() {
+        System.out.println("FlashCache critical purge event");
     }
 }

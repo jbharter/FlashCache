@@ -14,8 +14,8 @@ public class FlashCacheTest extends TestCase {
         test.setMapper(String::toLowerCase);
         test.put("OTHER");
 
-        assertTrue("Basic Call Test", test.get("rand").equals("RAND"));
-        assertTrue("Basic Call Test", test.get("OTHER").equals("other"));
+        assertEquals("Basic Call Test", "RAND", test.get("rand"));
+        assertEquals("Basic Call Test", "other", test.get("OTHER"));
 
     }
 
@@ -25,7 +25,7 @@ public class FlashCacheTest extends TestCase {
 
         test.put(Arrays.asList("0","1","2","3","4","5","6","7","8","9","10","11","12"));
 
-        assertTrue("Upper Bounds Test", test.size() == 10);
+        assertEquals("Upper Bounds Test", 10, (long) test.size());
     }
 
     public void testClear() {
@@ -34,9 +34,9 @@ public class FlashCacheTest extends TestCase {
         test.put("key","val");
         test.put("key0","val0");
 
-        assertTrue("Test Clear", test.size() == 2);
+        assertEquals("Test Clear", 2, (long) test.size());
         test.clear();
-        assertTrue("Test Clear", test.size() == 0);
+        assertEquals("Test Clear", 0, (long) test.size());
     }
 
 }

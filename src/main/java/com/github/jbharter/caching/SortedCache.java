@@ -15,12 +15,12 @@ public class SortedCache<K,V> extends BaseCache<K,V> {
     private PriorityBlockingQueue<Long> internalComputeTimeQueue = new PriorityBlockingQueue<>();
 
     public SortedCache() {
-        super(new CacheManagement(-1L,-1L));
+        //super(new CacheManagement(-1L,-1L));
         internalCache   = new ConcurrentHashMap<>();
     }
     public SortedCache(SortedCache<K,V> c) {
-        super(new CacheManagement(-1L,-1L));
-        internalCache = new ConcurrentHashMap<>(c.getInternalCache());
+        //super(new CacheManagement(-1L,-1L));
+        internalCache = new ConcurrentHashMap<>(c.internalCache);
         internalComputeTimeMap = new ConcurrentHashMap<>(c.getInternalComputeTimeMap());
         internalComputeTimeQueue = new PriorityBlockingQueue<>(c.getInternalComputeTimeQueue());
         mapper = c.mapper;
@@ -46,11 +46,16 @@ public class SortedCache<K,V> extends BaseCache<K,V> {
     public void setMapper(Function<? super K,? extends V> map)                          { this.mapper = map; }
     public V get(K key)                                                                 { return internalCache.getOrDefault(key, this.mapper != null ? put(key) : null); }
 
-    void purge()                                                                        {
+    @Override
+    public V getOrDefault(K key, V defaultValue) {
+        return null;
+    }
+
+    public void purge()                                                                        {
         if (size() > 0) poll();
         else clear();
     }
-    void purge(Long num)                                                                { for (int i = 0; i < num; ++i) purge(); }
+    public void purge(Long num)                                                                { for (int i = 0; i < num; ++i) purge(); }
     public V remove(Object key)                                                         {
         Set<Long> rset = internalComputeTimeMap.entrySet().parallelStream().filter(any -> any.getValue().equals(key)).map(Map.Entry::getKey).collect(Collectors.toSet());
         rset.forEach(inSet -> {
@@ -69,4 +74,13 @@ public class SortedCache<K,V> extends BaseCache<K,V> {
     public Collection<V> values()                                                       { return internalCache.values(); }
     public Set<Map.Entry<K, V>> entrySet()                                              { return internalCache.entrySet(); }
 
+    @Override
+    public void basicPurgeEvent() {
+
+    }
+
+    @Override
+    public void criticalPurgeEvent() {
+
+    }
 }
