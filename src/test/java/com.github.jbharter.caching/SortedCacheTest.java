@@ -8,7 +8,8 @@ import java.util.Objects;
 public class SortedCacheTest extends TestCase {
 
     public void testBasicCall() {
-        SortedCache<String,String> test = new SortedCache<>();
+        Cache<String,String> test = new SortedCache<>();
+
         test.setMapper(String::trim);
 
         test.put(" a string to be trimmed ");
@@ -20,7 +21,7 @@ public class SortedCacheTest extends TestCase {
     }
 
     public void testComputeQueue() {
-        SortedCache<String,String> test = new SortedCache<>();
+        Cache<String,String> test = new SortedCache<>();
         test.setMapper(String::trim);
         test.put(Arrays.asList("0","1","2","3","4","5","6","7","8","9","10","11","12"));
 
@@ -46,7 +47,7 @@ public class SortedCacheTest extends TestCase {
     }
 
     public void testClear() {
-        SortedCache<String,String> test = new SortedCache<>();
+        Cache<String,String> test = new SortedCache<>();
 
         test.setMapper(String::trim);
         test.put(Arrays.asList("0","1","2","3","4","5","6","7","8","9","10","11","12"));

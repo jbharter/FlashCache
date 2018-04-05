@@ -1,6 +1,6 @@
 package com.github.jbharter.caching;
 
-public interface PurgeEvent {
+public interface PurgeRequest {
     void basicPurgeEvent();
     void criticalPurgeEvent();
 }

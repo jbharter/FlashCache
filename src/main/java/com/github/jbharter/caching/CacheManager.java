@@ -48,9 +48,9 @@ public class CacheManager {
 
                     if (maxPressure.get() > threshold) { //critical
 
-                        cacheCollection.forEach(PurgeEvent::basicPurgeEvent);
+                        cacheCollection.forEach(PurgeRequest::basicPurgeEvent);
                     } else {
-                        cacheCollection.forEach(PurgeEvent::criticalPurgeEvent);
+                        cacheCollection.forEach(PurgeRequest::criticalPurgeEvent);
                     }
                 }
             }
@@ -68,6 +68,9 @@ public class CacheManager {
         }
         return _instance;
     }
+
+    static double getMemPressure()            { return 1.0 - (Runtime.getRuntime().freeMemory()/(double)Runtime.getRuntime().totalMemory()); }
+
 
     void registerCache(Cache c) {
         getInstance().cacheCollection.add(c);

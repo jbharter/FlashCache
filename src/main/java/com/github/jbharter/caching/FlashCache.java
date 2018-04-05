@@ -1,47 +1,52 @@
 package com.github.jbharter.caching;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class FlashCache<K,V> extends BaseCache<K,V> {
 
     private ConcurrentLinkedQueue<K> keyQueue = new ConcurrentLinkedQueue<>();
 
     public FlashCache() {
-        internalCache   = new ConcurrentHashMap<>();
+        super();
     }
+
     public FlashCache(Function<K,V> function) {
-        internalCache   = new ConcurrentHashMap<>();
-        mapper = function;
+        setCacheMappingFunction(function);
     }
+
     public FlashCache(Long maxElements) {
         super(maxElements);
-        internalCache   = new ConcurrentHashMap<>();
     }
+
     public FlashCache(Long step, Long maxElements) {
-        super(step,maxElements);
-        internalCache   = new ConcurrentHashMap<>();
+        super(step,maxElements, ConcurrentHashMap::new);
     }
 
     public void purge() {
-        if (keyQueue.size() > 0) internalCache.remove(keyQueue.poll());
-        else { clear(); }
+        if (keyQueue.size() > 0) {
+            remove(keyQueue.poll());
+        } else {
+            clear();
+        }
     }
+
+    @Override
+    protected void purge(int purgeDepth) {
+
+    }
+
     public void purge(Long num) { for (int i = 0; i < num; ++i) purge(); }
 
-    public FlashCache<K,V> setMapper(Function<? super K, ? extends V> map)   { this.mapper = map; return this; }
-    private ConcurrentLinkedQueue<K> getKeyQueue()                      { return keyQueue; }
-    private Function<? super K,? extends V> getFunc()                   { return this.mapper; }
 
     // Map interface
     public V put(K key) {
         try {
-            if (this.mapper == null) throw new NoSuchMethodException("Called put() on mapper, but no mapper initialized");
-            V val = this.mapper.apply(key);
+            if (getCacheMappingFunction() == null) throw new NoSuchMethodException("Called put() on mapper, but no mapper initialized");
+            V val = getCacheMappingFunction().apply(key);
             put(key,val);
             return val;
         } catch (NoSuchMethodException e) {
@@ -49,58 +54,69 @@ public class FlashCache<K,V> extends BaseCache<K,V> {
             return null;
         }
     }
-    public Set<V> put(Collection<K> keyColl) { return keyColl.stream().map(this::put).collect(Collectors.toSet()); }
-    public V put(K key, V value) {
-        if (notfull()) {
-            keyQueue.add(key);
-            return internalCache.put(key,value);
-        } else {
-            purge(getPurgeStep());
-            keyQueue.add(key);
-            return internalCache.put(key,value);
-        }
-    }
-    public V put(K key, Function<? super K,? extends V> mapper) { return put(key,mapper.apply(key)); }
-//    public void putAll(Map<? extends K, ? extends V> m) {
-//        if (m.size() + internalCache.size() <= getUpperBound()) {
-//            keyQueue.addAll(m.keySet());
-//            internalCache.putAll(m);
-//        } else if (m.size() + internalCache.size() > getUpperBound()) {
-//            Queue<K> keyset = new ConcurrentLinkedQueue<>(m.keySet());
-//            Queue<V> valset = new ConcurrentLinkedQueue<>(m.values());
-//            while (m.size() + internalCache.size() <= getUpperBound()) {
-//                put(keyset.poll(),valset.poll());
-//            }
-//        }
-//    }
-//    public void putAll(BaseCache<? extends K, ? extends V> bc) { putAll(bc.getInternalCache()); }
 
-    public V remove(K key) {
-        keyQueue.remove(key);
-        return internalCache.remove(key);
-    }
-
-    public V get(K key) {
-        return (internalCache.containsKey(key)) ? internalCache.get(key) : put(key);
+    @Override
+    public void putAll(Collection<? extends K> keyCollection) {
+        keyCollection.forEach(this::put);
     }
 
     @Override
-    public V getOrDefault(K key, V defaultValue) {
-        return null;
+    public V poll() {
+        return remove(keyQueue.poll());
+    }
+
+    @Override
+    public V put(K key, V value) {
+        if (upperBound.get() > size()) {
+            keyQueue.add(key);
+            return getCache().put(key,value);
+        } else { // Too full, do purge.
+            purge(purgeStep.get());
+            return put(key, value);
+        }
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        if (m.size() + size() <= upperBound.get()) {
+            keyQueue.addAll(m.keySet());
+            getCache().putAll(m);
+        } else {
+            purge(m.size());
+            putAll(m);
+        }
+    }
+
+    @Override
+    public V remove(Object key) {
+        // FIXME - Need to be able to remove this
+        keyQueue.remove(keyCast(key));
+        return getCache().remove(key);
+    }
+
+    @Override
+    public V get(Object key) {
+        if (containsKey(key)) {
+            return getCache().get(key);
+        } else {
+            return getCache().computeIfAbsent(keyCast(key),getCacheMappingFunction());
+        }
     }
 
     public void clear() {
         keyQueue.clear();
-        internalCache.clear();
+        super.clear();
     }
 
     @Override
     public void basicPurgeEvent() {
         System.out.println("FlashCache purge event");
+        purge();
     }
 
     @Override
     public void criticalPurgeEvent() {
         System.out.println("FlashCache critical purge event");
+        clear();
     }
 }
