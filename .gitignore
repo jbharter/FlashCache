@@ -5,6 +5,7 @@
 
 *.iml
 .idea/
+target/
 
 # CMake
 cmake-build-debug/

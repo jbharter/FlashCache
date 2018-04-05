@@ -1,6 +1,6 @@
 package com.github.jbharter.caching;
 
-// Cache manager (PGP Signing Test)
+// Cache manager
 //  - Keeps track of active caches
 //  - Monitors approximate memory usage of each cache
 //  - Will ask caches to reduce their size
