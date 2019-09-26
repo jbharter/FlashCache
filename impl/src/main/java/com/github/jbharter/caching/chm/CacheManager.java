@@ -1,9 +1,12 @@
-package com.github.jbharter.caching;
+package com.github.jbharter.caching.chm;
 
 // Cache manager
 //  - Keeps track of active caches
 //  - Monitors approximate memory usage of each cache
 //  - Will ask caches to reduce their size
+
+import com.github.jbharter.caching.api.Cache;
+import com.github.jbharter.caching.api.PurgeEvent;
 
 import java.util.Collection;
 import java.util.Timer;

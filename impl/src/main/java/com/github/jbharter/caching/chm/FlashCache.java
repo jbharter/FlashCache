@@ -1,4 +1,4 @@
-package com.github.jbharter.caching;
+package com.github.jbharter.caching.chm;
 
 import java.util.Collection;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.github.jbharter.caching;
+package com.github.jbharter.caching.api;
 
 import java.util.*;
 import java.util.function.BiConsumer;
